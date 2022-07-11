@@ -64,8 +64,9 @@ contract SBT {
         require(countIssued[company] != 0, "SBT: company not registerd");
 
         JobSBT memory _jobSBT = pendingSBT[company][msg.sender];
-        require (_jobSBT.isSet == 1, "SBT: request is already in pending list");
+        require (_jobSBT.isSet == 0, "SBT: request is already in pending list");
 
+        jobSBT_.isSet = 1;
         pendingSBT[company][msg.sender] = jobSBT_;
         pendingSBTAddresses[company].push(msg.sender);
         return true;
@@ -123,7 +124,7 @@ contract SBT {
         for (uint i = 0; i < len; i++) {
             if (pendingSBTAddresses[company][i] == user) {
                 pendingSBTAddresses[company][i] = pendingSBTAddresses[company][len-1];
-                delete pendingSBTAddresses[company][len-1];
+                pendingSBTAddresses[company].pop();
                 break;
             }
         }
