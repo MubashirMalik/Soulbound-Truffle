@@ -121,22 +121,72 @@ contract("SBT", accounts => {
         let result = await instance.getPendingSBTRequests({from: accounts[1]});
         assert.equal(result[0].length, 3);
         assert.equal(result[1].length, 3);
+
         result = await instance.getPendingSBTRequests();
         assert.equal(result[1].length, 1);
     });
 
-    it("should respond to a pending request", async () => {
+    it("should respond to a pending requests", async () => {
+
+        let countIssued = await instance.getCountIssued({from: accounts[1]});
+        assert.equal(countIssued.toNumber(), 1);
+
         // accept the offer
         await instance.respondToRequestSBT(accounts[7], true, {from: accounts[1]});
-
+        
         let result = await instance.getPendingSBTRequests({from: accounts[1]});
-
         assert.equal(result[1].length, 2);
 
+        countIssued = await instance.getCountIssued({from: accounts[1]});
+        assert.equal(countIssued.toNumber(), 2);
+        
         // reject the offer
         await instance.respondToRequestSBT(accounts[8], false, {from: accounts[1]});
 
         result = await instance.getPendingSBTRequests({from: accounts[1]});
         assert.equal(result[1].length, 1);
+
+        countIssued = await instance.getCountIssued({from: accounts[1]});
+        assert.equal(countIssued.toNumber(), 2);
+
+        // accept the offer
+        await instance.respondToRequestSBT(accounts[9], true, {from: accounts[1]});
+
+        result = await instance.getPendingSBTRequests({from: accounts[1]});
+        assert.equal(result[1].length, 0);
+
+        countIssued = await instance.getCountIssued({from: accounts[1]});
+        assert.equal(countIssued.toNumber(), 3);
+    });
+
+    it("should not allow verification of a zero address (company)", async () => {
+        try {
+            await instance.verifySBT(ZERO_ADDRESS, accounts[9], 1);
+            assert.fail("The transaction should have thrown an error");
+        }
+        catch (err) {
+            assert.include(err.message, "revert", "The error message should contain 'revert'");
+        }
+    });
+
+    it("should not allow verification of a zero address (issuedTo)", async () => {
+        try {
+            await instance.verifySBT(accounts[0], ZERO_ADDRESS, 1);
+            assert.fail("The transaction should have thrown an error");
+        }
+        catch (err) {
+            assert.include(err.message, "revert", "The error message should contain 'revert'");
+        }
+    });
+
+    it("should perform verification of a SBT", async () => { 
+        let result = await instance.verifySBT(accounts[1], accounts[9], 1);
+        assert.equal(result, false);
+
+        result = await instance.verifySBT(accounts[1], accounts[9], 4);
+        assert.equal(result, false);
+
+        result = await instance.verifySBT(accounts[1], accounts[9], 3);
+        assert.equal(result, true);
     });
 });

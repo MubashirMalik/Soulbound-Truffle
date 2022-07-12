@@ -33,7 +33,7 @@ contract SBT {
      * - 1 means company is registerd.
      * - n means company has issued n-1 SBT. 
     */
-    mapping (address => uint) countIssued;
+    mapping (address => uint) private countIssued;
 
     /** 
      * @dev Registers the caller with the contract.
@@ -116,6 +116,8 @@ contract SBT {
         require(pendingSBT[company][user].isSet == 1, "SBT: user has not requested any SBT");
 
         if (response == true) {
+            countIssued[company]++;
+            pendingSBT[company][user].id = countIssued[company];
             pendingSBT[company][user].isSet = 2;
             issuedSBT[company][user].push(pendingSBT[company][user]);
         } 
@@ -132,6 +134,13 @@ contract SBT {
         return true;
     }
 
+    /** 
+    * @dev Returns count of SBT issued by the caller (company)
+    */
+    function getCountIssued() external view returns (uint) {
+        return countIssued[msg.sender];
+    }
+
     /**
      * @dev Returns a boolean value indicating whether `company` has issued a SBT with
      * `id` to the `issuedTo` or not.
@@ -145,16 +154,10 @@ contract SBT {
     function verifySBT(address company, address issuedTo, uint id) external view returns (bool) {
         require(company != address(0), "SBT: company address cannot be the zero address");
         require(issuedTo != address(0), "SBT: issuedTo address cannot be the zero address");
-        require(id > countIssued[company], "SBT: id cannot be greater than the total SBT issued by company");
 
-        JobSBT[] memory jobSBT = issuedSBT[company][issuedTo];
-        bool flag = false;
-        for (uint i = 0; i < jobSBT.length; i++) {
-            if (jobSBT[i].id == id) {
-                flag = true;
-                break;
-            }
+        if (id <= countIssued[company] && id > 1) {
+            return true;
         }
-        return flag;
+        return false;
     }
 }
