@@ -189,4 +189,27 @@ contract("SBT", accounts => {
         result = await instance.verifySBT(accounts[1], accounts[9], 3);
         assert.equal(result, true);
     });
+
+    it("should not return issued SBT to a zero address", async () => { 
+        try {
+            await instance.getIssuedSBTUser(ZERO_ADDRESS);
+            assert.fail("The transaction should have thrown an error");
+        }
+        catch (err) {
+            assert.include(err.message, "revert", "The error message should contain 'revert'");
+        }
+    });
+
+    it("should return issued SBT to a non-zero address", async () => { 
+        let result = await instance.getIssuedSBTUser(accounts[9]);
+        assert.equal(result.length, 1);
+
+        // request and issue another SBT
+        await instance.registerCompany({from: accounts[2]});
+        await instance.requestSBT(accounts[2], jobSBT, {from: accounts[9]});
+        await instance.respondToRequestSBT(accounts[9], true, {from: accounts[2]});
+
+        result = await instance.getIssuedSBTUser(accounts[9]);
+        assert.equal(result.length, 2);
+    });
 });

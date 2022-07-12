@@ -21,6 +21,7 @@ contract SBT {
     }
 
     mapping (address => mapping(address => JobSBT[])) private issuedSBT;
+    mapping (address => JobSBT[]) private issuedSBTUser;
 
     // Requested SBTs that are not yet accepted/rejected
     mapping (address => mapping(address => JobSBT)) private pendingSBT;
@@ -119,6 +120,8 @@ contract SBT {
             countIssued[company]++;
             pendingSBT[company][user].id = countIssued[company];
             pendingSBT[company][user].isSet = 2;
+            
+            issuedSBTUser[user].push(pendingSBT[company][user]);
             issuedSBT[company][user].push(pendingSBT[company][user]);
         } 
 
@@ -159,5 +162,13 @@ contract SBT {
             return true;
         }
         return false;
+    }
+
+    /** 
+     * @dev Returns all SBT issued to a `user`
+     */
+    function getIssuedSBTUser(address user) external view returns (JobSBT[] memory){
+        require(user != address(0), "SBT: user address cannot be the zero address");
+        return issuedSBTUser[user];
     }
 }
